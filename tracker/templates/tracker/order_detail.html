@@ -1404,9 +1404,26 @@
                 </div>
 
                 <!-- Custom Comments -->
-                <div>
+                <div class="mb-3">
                   <label class="form-label text-muted small">Additional Comments (optional)</label>
                   <textarea id="delayReasonComments" name="delay_reason_comments" class="form-control form-control-sm" rows="2" placeholder="Add any additional details about the delay..."></textarea>
+                </div>
+
+                <!-- Save Delay Reason Feedback -->
+                <div id="delayReasonSaveMessage" class="alert alert-info" style="display: none; margin-top: 1rem;">
+                  <i class="fa fa-check-circle me-2"></i>
+                  <span id="delayReasonSaveText">Delay reason saved successfully</span>
+                </div>
+
+                <!-- Save Delay Reason Button -->
+                <div class="d-flex gap-2 mt-3">
+                  <button type="button" id="saveDelayReasonBtn" class="btn btn-sm btn-primary">
+                    <i class="fa fa-save me-1"></i>Save Delay Reason
+                  </button>
+                  <button type="button" id="saveDelayReasonLoadingBtn" class="btn btn-sm btn-primary" style="display: none;" disabled>
+                    <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                    Saving...
+                  </button>
                 </div>
 
                 <small class="text-muted d-block mt-2">
