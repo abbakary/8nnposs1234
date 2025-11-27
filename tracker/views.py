@@ -503,6 +503,36 @@ def dashboard(request: HttpRequest):
             if month_gross_sums.get('month_count') is not None:
                 invoices_this_month_count = month_gross_sums.get('month_count')
 
+            # Daily revenue calculations (today's invoices)
+            today_date = timezone.localdate()
+            today_start_datetime = timezone.make_aware(datetime.combine(today_date, datetime.min.time()))
+            today_end_datetime = timezone.make_aware(datetime.combine(today_date, datetime.max.time()))
+
+            today_invoices = invoices_qs.filter(
+                created_at__gte=today_start_datetime,
+                created_at__lte=today_end_datetime
+            )
+
+            # Calculate gross revenue today
+            today_gross_revenue = Decimal('0')
+            today_net_revenue = Decimal('0')
+            today_vat = Decimal('0')
+
+            today_gross_sums = today_invoices.aggregate(
+                today_gross=Sum('total_amount'),
+                today_net=Sum('subtotal'),
+                today_vat_sum=Sum('tax_amount')
+            )
+
+            if today_gross_sums.get('today_gross') is not None:
+                today_gross_revenue = Decimal(str(today_gross_sums.get('today_gross')))
+
+            if today_gross_sums.get('today_net') is not None:
+                today_net_revenue = Decimal(str(today_gross_sums.get('today_net')))
+
+            if today_gross_sums.get('today_vat_sum') is not None:
+                today_vat = Decimal(str(today_gross_sums.get('today_vat_sum')))
+
             # Revenue by branch (Gross Value)
             branch_sums = invoices_qs.values('branch__name').annotate(
                 total=Sum('total_amount')
