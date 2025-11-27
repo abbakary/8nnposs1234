@@ -1361,76 +1361,16 @@
               </div>
               {% endif %}
 
-              <!-- Delay Reason for Orders Exceeding 9+ Hours -->
+              <!-- Delay Reason - Free Form Input -->
               <div class="mb-3" id="delayReasonSection">
                 <label class="form-label fw-bold text-dark mb-2">
-                  <i class="fa fa-exclamation-circle me-2 text-danger"></i><span id="delayReasonLabel">Reason for Delays</span> <span id="delayReasonRequired" class="text-danger" style="display:none;">*</span><small class="fw-normal text-muted" id="delayReasonOptionalText"> (optional)</small>
+                  <i class="fa fa-exclamation-circle me-2 text-warning"></i>Reason for Extended Duration <small class="fw-normal text-muted">(optional)</small>
                 </label>
 
-                <!-- Category Dropdown -->
-                <div class="mb-2">
-                  <label class="form-label text-muted small">Category</label>
-                  <select id="delayReasonCategory" name="delay_reason_category" class="form-select">
-                    <option value="">-- Select Category --</option>
-                    <option value="parts" selected>Parts-Related Delays</option>
-                    <option value="technical">Technical / Diagnostic Issues</option>
-                    <option value="workload">High Workload / Operational Capacity</option>
-                    <option value="customer">Customer-Related Causes</option>
-                    <option value="administrative">Administrative / System Issues</option>
-                    <option value="quality">Quality-Control & Testing Delays</option>
-                    <option value="external">External / Environmental Factors</option>
-                  </select>
-                  <input type="hidden" name="delay_reason_text" id="delayReasonTextHidden" value="">
-                </div>
-
-                <!-- Specific Reason Dropdown -->
-                <div class="mb-2">
-                  <label class="form-label text-muted small">Specific Reason <span id="reasonRequiredBadge" class="badge bg-danger ms-2" style="display:none;">Required</span></label>
-                  <select id="delayReasonDropdown" name="delay_reason" class="form-select">
-                    <option value="">-- Select Specific Reason --</option>
-                    {% if delay_reasons_by_category and delay_reasons_by_category.parts %}
-                      {% for reason in delay_reasons_by_category.parts %}
-                        <option value="{{ reason.id }}">{{ reason.reason_text }}</option>
-                      {% endfor %}
-                    {% else %}
-                      <option value="1">Spare parts out of stock</option>
-                      <option value="2">Incorrect part delivered or mismatch with vehicle model</option>
-                      <option value="3">Delayed parts shipment from supplier</option>
-                      <option value="4">Need for special-order parts (rare or imported)</option>
-                    {% endif %}
-                  </select>
-                  <div id="selectedReasonDisplay" class="alert alert-info mt-2" style="display:none;">
-                    <i class="fa fa-check-circle me-2"></i>
-                    <strong>Selected:</strong> <span id="selectedReasonText"></span>
-                  </div>
-                </div>
-
-                <!-- Custom Comments -->
+                <!-- Free-Form Text Input for Delay Reason -->
                 <div class="mb-3">
-                  <label class="form-label text-muted small">Additional Comments (optional)</label>
-                  <textarea id="delayReasonComments" name="delay_reason_comments" class="form-control form-control-sm" rows="2" placeholder="Add any additional details about the delay..."></textarea>
+                  <textarea id="delayReasonInput" name="delay_reason_text" class="form-control" rows="3" placeholder="If the order took longer than estimated, provide the reason here (e.g., additional repairs discovered, technical issues, parts shortage, etc.)..."></textarea>
                 </div>
-
-                <!-- Save Delay Reason Feedback -->
-                <div id="delayReasonSaveMessage" class="alert alert-info" style="display: none; margin-top: 1rem;">
-                  <i class="fa fa-check-circle me-2"></i>
-                  <span id="delayReasonSaveText">Delay reason saved successfully</span>
-                </div>
-
-                <!-- Save Delay Reason Button -->
-                <div class="d-flex gap-2 mt-3">
-                  <button type="button" id="saveDelayReasonBtn" class="btn btn-sm btn-primary">
-                    <i class="fa fa-save me-1"></i>Save Delay Reason
-                  </button>
-                  <button type="button" id="saveDelayReasonLoadingBtn" class="btn btn-sm btn-primary" style="display: none;" disabled>
-                    <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                    Saving...
-                  </button>
-                </div>
-
-                <small class="text-muted d-block mt-2">
-                  <i class="fa fa-info-circle me-1"></i><span id="delayReasonHelpText">Select the reason if order exceeded 9 working hours.</span>
-                </small>
               </div>
             </div>
           </div>
@@ -1567,17 +1507,11 @@
       initializeDelayReasonFields();
     }
 
-    // Check if delay reason is required and validate
-    const delayReasonDropdownRef = document.getElementById('delayReasonDropdown');
-    if (exceeds9HoursCheck && delayReasonDropdownRef) {
-      const selectedReason = delayReasonDropdownRef.value;
-      if (!selectedReason) {
-        // Switch to details tab to show the delay reason field
-        const detailsTab = document.getElementById('detailsTab');
-        if (detailsTab) detailsTab.click();
-        alert('Order has exceeded 9 working hours. Please select a delay reason before completing.');
-        return false;
-      }
+    // Check if user provided a delay reason when order exceeded 9 hours and show alert
+    const delayReasonInput = document.getElementById('delayReasonInput');
+    if (exceeds9HoursCheck && delayReasonInput && delayReasonInput.value.trim()) {
+      // Show confirmation alert that order exceeded 9 hours and reason was provided
+      showDelayExceededAlert();
     }
 
     ensureAndSubmit();
