@@ -1665,49 +1665,55 @@
   initializeDelayReasonFields();
 
   // Absolute fallback: derive first available category from the data map
-  if (delayReasonDropdown && delayReasonDropdown.options.length <= 1) {
-    try {
-      const categories = Object.keys(delayReasonsByCategoryJson || {});
-      if (categories.length > 0) {
-        const firstCat = categories[0];
-        if (delayReasonCategory && !delayReasonCategory.value) {
-          delayReasonCategory.value = firstCat;
+  function ensureDelayReasonPopulated() {
+    const els = getDelayReasonElements();
+    if (els.dropdown && els.dropdown.options.length <= 1) {
+      try {
+        const categories = Object.keys(delayReasonsByCategoryJson || {});
+        if (categories.length > 0) {
+          const firstCat = categories[0];
+          if (els.category && !els.category.value) {
+            els.category.value = firstCat;
+          }
+          populateReasons(firstCat);
+          if (els.dropdown.options.length > 1) {
+            els.dropdown.selectedIndex = 1;
+          }
         }
-        populateReasons(firstCat);
-        if (delayReasonDropdown.options.length > 1) {
-          delayReasonDropdown.selectedIndex = 1;
-        }
+      } catch (e) {
+        console.warn('Fallback population failed:', e);
       }
-    } catch (e) {
-      console.warn('Fallback population failed:', e);
     }
   }
 
+  ensureDelayReasonPopulated();
+
   // Ensure delay reason text is synced on form submission for server fallback
-  if (delayReasonDropdown && completeForm) {
+  if (completeForm) {
     completeForm.addEventListener('submit', function() {
       // Persist the selected reason's text for server fallback
-      const sel = delayReasonDropdown;
-      const reasonText = sel && sel.options && sel.selectedIndex > 0 ? sel.options[sel.selectedIndex].text : '';
-      const hiddenText = document.getElementById('delayReasonTextHidden');
-      if (hiddenText) hiddenText.value = reasonText;
+      const els = getDelayReasonElements();
+      if (els.dropdown) {
+        const reasonText = els.dropdown && els.dropdown.options && els.dropdown.selectedIndex > 0 ? els.dropdown.options[els.dropdown.selectedIndex].text : '';
+        const hiddenText = document.getElementById('delayReasonTextHidden');
+        if (hiddenText) hiddenText.value = reasonText;
+      }
     });
   }
 
   // Keep hidden text in sync when user changes selection and show selected reason
-  if (delayReasonDropdown) {
-    delayReasonDropdown.addEventListener('change', function(){
-      const hidden = document.getElementById('delayReasonTextHidden');
-      const sel = delayReasonDropdown;
-      const txt = sel && sel.options && sel.selectedIndex > 0 ? sel.options[sel.selectedIndex].text : '';
-      if (hidden) hidden.value = txt;
+  function attachDelayReasonDropdownListener() {
+    const els = getDelayReasonElements();
+    if (els.dropdown && !els.dropdown.dataset.changeListenerAttached) {
+      els.dropdown.addEventListener('change', function(){
+        const hidden = document.getElementById('delayReasonTextHidden');
+        const sel = els.dropdown;
+        const txt = sel && sel.options && sel.selectedIndex > 0 ? sel.options[sel.selectedIndex].text : '';
+        if (hidden) hidden.value = txt;
 
-      // Show/hide selected reason display
-      const selectedDisplay = document.getElementById('selectedReasonDisplay');
-      const selectedText = document.getElementById('selectedReasonText');
-      if (sel.value && txt) {
-        if (selectedDisplay) {
-          selectedText.textContent = txt;
+        // Show/hide selected reason display
+        if (sel.value && txt && els.selectedDisplay) {
+          if (els.selectedText) els.selectedText.textContent = txt;
           selectedDisplay.style.display = 'block';
         }
       } else {
