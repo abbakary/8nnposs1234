@@ -1547,13 +1547,22 @@
     ];
   }
 
-  const delayReasonCategory = document.getElementById('delayReasonCategory');
-  const delayReasonDropdown = document.getElementById('delayReasonDropdown');
-  const delayReasonSection = document.getElementById('delayReasonSection');
-  const delayReasonLabel = document.getElementById('delayReasonLabel');
-  const delayReasonRequired = document.getElementById('delayReasonRequired');
-  const delayReasonOptionalText = document.getElementById('delayReasonOptionalText');
-  const delayReasonHelpText = document.getElementById('delayReasonHelpText');
+  // Initialize delay reason elements (may not be immediately available, so we get references when needed)
+  function getDelayReasonElements() {
+    return {
+      category: document.getElementById('delayReasonCategory'),
+      dropdown: document.getElementById('delayReasonDropdown'),
+      section: document.getElementById('delayReasonSection'),
+      label: document.getElementById('delayReasonLabel'),
+      required: document.getElementById('delayReasonRequired'),
+      optional: document.getElementById('delayReasonOptionalText'),
+      helpText: document.getElementById('delayReasonHelpText'),
+      comments: document.getElementById('delayReasonComments'),
+      selectedDisplay: document.getElementById('selectedReasonDisplay'),
+      selectedText: document.getElementById('selectedReasonText')
+    };
+  }
+
   const completeForm = document.getElementById('completeForm');
   const footerSignAndComplete = document.getElementById('footerSignAndComplete');
 
