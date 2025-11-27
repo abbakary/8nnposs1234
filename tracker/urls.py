@@ -58,6 +58,7 @@ urlpatterns = [
     path("api/orders/<int:pk>/status/", views.api_order_status, name="api_order_status"),
     path("api/orders/statuses/", views.api_orders_statuses, name="api_orders_statuses"),
     path("api/orders/<int:pk>/invoice-totals/", views.api_order_invoice_totals, name="api_order_invoice_totals"),
+    path("api/orders/<int:pk>/save-delay-reason/", views.api_save_delay_reason, name="api_save_delay_reason"),
     path("orders/<int:pk>/cancel/", views.cancel_order, name="cancel_order"),
     path("orders/<int:pk>/component/add/", views.add_order_component, name="add_order_component"),
     path("orders/<int:pk>/invoice/link/", views.link_invoice_to_order, name="link_invoice_to_order"),
