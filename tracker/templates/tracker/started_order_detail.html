@@ -85,26 +85,77 @@
             </div>
 
     
-          <!-- Overrun Reason Modal -->
-          <div class="modal fade" id="overrunReasonModal" tabindex="-1">
+          <!-- Complete Order Modal - Delay Reason Form -->
+          <div class="modal fade" id="completeOrderModal" tabindex="-1" aria-hidden="true">
             <div class="modal-dialog">
               <div class="modal-content">
-                <div class="modal-header bg-warning text-dark">
-                  <h5 class="modal-title">Order Overrun Reason</h5>
-                  <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                  <p class="mb-2">This service order has exceeded the expected time. Please provide a reason before completing.</p>
-                  <div class="mb-3">
-                    <label class="form-label">Reason</label>
-                    <textarea id="overrunReasonInput" class="form-control" rows="4" placeholder="Explain why this order exceeded its ETA (required)"></textarea>
-                    <div id="overrunReasonError" class="text-danger mt-2" style="display:none;"></div>
+                <form id="completeOrderForm" method="post" action="{% url 'tracker:complete_order' pk=order.id %}">
+                  {% csrf_token %}
+                  <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title"><i class="fa fa-check-circle me-2"></i>Complete Order</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                   </div>
-                </div>
-                <div class="modal-footer bg-light">
-                  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                  <button type="button" id="saveOverrunReasonBtn" class="btn btn-warning">Save & Continue to Complete</button>
-                </div>
+                  <div class="modal-body">
+                    <!-- Alert when order exceeds 9 hours -->
+                    <div id="delayReasonAlert" class="alert alert-warning alert-dismissible fade show" style="display:none;">
+                      <i class="fa fa-exclamation-triangle me-2"></i>
+                      <strong>Order Exceeds 9 Working Hours</strong>
+                      <p class="mb-0 mt-2">This order has exceeded 9 working hours. You must select a delay reason before completing.</p>
+                    </div>
+
+                    <!-- Delay Reason Form -->
+                    <div class="mb-3" id="delayReasonSection">
+                      <label class="form-label fw-bold text-dark mb-2">
+                        <i class="fa fa-exclamation-circle me-2 text-danger"></i><span id="delayReasonLabel">Reason for Delays</span> <span id="delayReasonRequired" class="text-danger" style="display:none;">*</span><small class="fw-normal text-muted" id="delayReasonOptionalText"> (optional)</small>
+                      </label>
+
+                      <!-- Category Dropdown -->
+                      <div class="mb-2">
+                        <label class="form-label text-muted small">Category</label>
+                        <select id="delayReasonCategory" name="delay_reason_category" class="form-select">
+                          <option value="">-- Select Category --</option>
+                          <option value="parts">Parts-Related Delays</option>
+                          <option value="technical">Technical / Diagnostic Issues</option>
+                          <option value="workload">High Workload / Operational Capacity</option>
+                          <option value="customer">Customer-Related Causes</option>
+                          <option value="administrative">Administrative / System Issues</option>
+                          <option value="quality">Quality-Control & Testing Delays</option>
+                          <option value="external">External / Environmental Factors</option>
+                        </select>
+                      </div>
+
+                      <!-- Specific Reason Dropdown -->
+                      <div class="mb-2">
+                        <label class="form-label text-muted small">Specific Reason <span id="reasonRequiredBadge" class="badge bg-danger ms-2" style="display:none;">Required</span></label>
+                        <select id="delayReasonDropdown" name="delay_reason" class="form-select">
+                          <option value="">-- Select Specific Reason --</option>
+                        </select>
+                        <div id="selectedReasonDisplay" class="alert alert-info mt-2" style="display:none;">
+                          <i class="fa fa-check-circle me-2"></i>
+                          <strong>Selected:</strong> <span id="selectedReasonText"></span>
+                        </div>
+                      </div>
+
+                      <!-- Custom Comments -->
+                      <div>
+                        <label class="form-label text-muted small">Additional Comments (optional)</label>
+                        <textarea id="delayReasonComments" name="delay_reason_comments" class="form-control form-control-sm" rows="2" placeholder="Add any additional details about the delay..."></textarea>
+                      </div>
+
+                      <small class="text-muted d-block mt-2">
+                        <i class="fa fa-info-circle me-1"></i><span id="delayReasonHelpText">Select the reason if order exceeded 9 working hours.</span>
+                      </small>
+                    </div>
+
+                    <div id="delayReasonError" class="alert alert-danger" style="display:none;"></div>
+                  </div>
+                  <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-success fw-bold">
+                      <i class="fa fa-check-circle me-2"></i>Complete Order
+                    </button>
+                  </div>
+                </form>
               </div>
             </div>
           </div>
