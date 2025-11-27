@@ -558,6 +558,7 @@ def dashboard(request: HttpRequest):
         # Revenue breakdown by order type
         revenue_by_type = {}
         revenue_by_type_this_month = {}
+        revenue_by_type_today = {}
         try:
             from tracker.utils.revenue_utils import get_revenue_by_order_type
 
@@ -566,6 +567,9 @@ def dashboard(request: HttpRequest):
 
             # This month's revenue by type
             revenue_by_type_this_month = get_revenue_by_order_type(month_invoices)
+
+            # Today's revenue by type
+            revenue_by_type_today = get_revenue_by_order_type(today_invoices)
         except Exception as e:
             logger.warning(f"Error calculating revenue by order type: {e}")
             revenue_by_type = {
@@ -577,6 +581,14 @@ def dashboard(request: HttpRequest):
                 'count': 0,
             }
             revenue_by_type_this_month = {
+                'sales': Decimal('0'),
+                'service': Decimal('0'),
+                'labour': Decimal('0'),
+                'unknown': Decimal('0'),
+                'total': Decimal('0'),
+                'count': 0,
+            }
+            revenue_by_type_today = {
                 'sales': Decimal('0'),
                 'service': Decimal('0'),
                 'labour': Decimal('0'),
