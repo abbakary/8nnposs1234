@@ -1654,14 +1654,32 @@
     });
   }
 
-  // Keep hidden text in sync when user changes selection
+  // Keep hidden text in sync when user changes selection and show selected reason
   if (delayReasonDropdown) {
     delayReasonDropdown.addEventListener('change', function(){
       const hidden = document.getElementById('delayReasonTextHidden');
       const sel = delayReasonDropdown;
       const txt = sel && sel.options && sel.selectedIndex > 0 ? sel.options[sel.selectedIndex].text : '';
       if (hidden) hidden.value = txt;
+
+      // Show/hide selected reason display
+      const selectedDisplay = document.getElementById('selectedReasonDisplay');
+      const selectedText = document.getElementById('selectedReasonText');
+      if (sel.value && txt) {
+        if (selectedDisplay) {
+          selectedText.textContent = txt;
+          selectedDisplay.style.display = 'block';
+        }
+      } else {
+        if (selectedDisplay) selectedDisplay.style.display = 'none';
+      }
     });
+  }
+
+  // Show required badge when exceeds 9 hours
+  if (exceeds9Hours) {
+    const requiredBadge = document.getElementById('reasonRequiredBadge');
+    if (requiredBadge) requiredBadge.style.display = 'inline-block';
   }
 })();
 </script>
