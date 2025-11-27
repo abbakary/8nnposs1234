@@ -1600,22 +1600,32 @@
   updateDelayReasonUI();
 
   // Initialize Specific Reason dropdown on load
-  if (delayReasonCategory) {
-    // If no category selected, pick the first non-empty option
-    if (!delayReasonCategory.value) {
-      const firstCategoryOption = delayReasonCategory.querySelector('option[value]:not([value=""])');
-      if (firstCategoryOption) {
-        delayReasonCategory.value = firstCategoryOption.value;
+  function initializeDelayReasonFields() {
+    if (delayReasonCategory) {
+      // If no category selected, pick the first non-empty option
+      if (!delayReasonCategory.value) {
+        const firstCategoryOption = delayReasonCategory.querySelector('option[value]:not([value=""])');
+        if (firstCategoryOption) {
+          delayReasonCategory.value = firstCategoryOption.value;
+        }
+      }
+      if (delayReasonCategory.value) {
+        populateReasons(delayReasonCategory.value);
+        // Auto-select first specific reason if none selected
+        if (delayReasonDropdown && (!delayReasonDropdown.value || delayReasonDropdown.value === '') && delayReasonDropdown.options.length > 1) {
+          delayReasonDropdown.selectedIndex = 1;
+        }
       }
     }
-    if (delayReasonCategory.value) {
-      populateReasons(delayReasonCategory.value);
-      // Auto-select first specific reason if none selected
-      if (delayReasonDropdown && (!delayReasonDropdown.value || delayReasonDropdown.value === '') && delayReasonDropdown.options.length > 1) {
-        delayReasonDropdown.selectedIndex = 1;
-      }
+    // Sync hidden text field
+    if (delayReasonDropdown && delayReasonDropdown.selectedIndex > 0) {
+      const hidden = document.getElementById('delayReasonTextHidden');
+      const txt = delayReasonDropdown.options[delayReasonDropdown.selectedIndex].text;
+      if (hidden) hidden.value = txt;
     }
   }
+
+  initializeDelayReasonFields();
 
   // Absolute fallback: derive first available category from the data map
   if (delayReasonDropdown && delayReasonDropdown.options.length <= 1) {
