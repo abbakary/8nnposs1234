@@ -3525,8 +3525,8 @@ def complete_order(request: HttpRequest, pk: int):
         pass
 
     if exceeds_9_hours:
-        # Get delay reason from POST - prioritize the selected ID from dropdown
-        delay_reason_id = request.POST.get('delay_reason')
+        # Get delay reason from POST - prioritize the selected ID from dropdown (check multiple field names for compatibility)
+        delay_reason_id = request.POST.get('delay_reason') or request.POST.get('delay_reason_id') or request.POST.get('delay_reason_id_hidden')
         delay_reason_saved = False
 
         # First, try to save using the selected ID (primary path)
