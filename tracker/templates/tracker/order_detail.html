@@ -1430,8 +1430,25 @@
   });
 
   // Attach handlers to buttons inside signature modal
-  if (footerBtn) footerBtn.addEventListener('click', ensureAndSubmit);
-  if (signAndCompleteBtn) signAndCompleteBtn.addEventListener('click', ensureAndSubmit);
+  function handleFooterButtonClick(e) {
+    e.preventDefault();
+    // Check if delay reason is required and validate
+    const exceeds9Hours = {{ exceeds_9_hours|lower }};
+    const delayReasonDropdown = document.getElementById('delayReasonDropdown');
+
+    if (exceeds9Hours && delayReasonDropdown) {
+      const selectedReason = delayReasonDropdown.value;
+      if (!selectedReason) {
+        alert('Please select a delay reason before completing this order. This order exceeded 9 working hours.');
+        return false;
+      }
+    }
+
+    ensureAndSubmit();
+  }
+
+  if (footerBtn) footerBtn.addEventListener('click', handleFooterButtonClick);
+  if (signAndCompleteBtn) signAndCompleteBtn.addEventListener('click', handleFooterButtonClick);
 
   if (overrunModal && document.getElementById('completeOverrunSave')){
     document.getElementById('completeOverrunSave').addEventListener('click', function(){
