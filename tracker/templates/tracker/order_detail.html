@@ -1502,11 +1502,6 @@
   function handleFooterButtonClick(e) {
     e.preventDefault();
 
-    // Re-initialize delay reason fields before validation
-    if (typeof initializeDelayReasonFields === 'function') {
-      initializeDelayReasonFields();
-    }
-
     // Check if user provided a delay reason when order exceeded 9 hours and show alert
     const delayReasonInput = document.getElementById('delayReasonInput');
     if (exceeds9HoursCheck && delayReasonInput && delayReasonInput.value.trim()) {
