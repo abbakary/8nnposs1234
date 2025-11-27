@@ -1198,6 +1198,8 @@
           <input type="hidden" name="signature_data" id="signatureDataInput">
           <input type="hidden" name="overrun_reason" id="completeOverrunHidden" value="{{ order.overrun_reason|default:''|escape }}">
           <input type="hidden" name="selected_document" id="selectedDocumentInput">
+          <input type="hidden" name="delay_reason_id_hidden" id="delayReasonIdHidden" value="">
+          <input type="hidden" name="delay_reason_text" id="delayReasonTextHidden" value="">
 
           <!-- Tab Navigation -->
           <div class="border-bottom px-4 pt-4">
@@ -1359,76 +1361,16 @@
               </div>
               {% endif %}
 
-              <!-- Delay Reason for Orders Exceeding 9+ Hours -->
+              <!-- Delay Reason - Free Form Input -->
               <div class="mb-3" id="delayReasonSection">
                 <label class="form-label fw-bold text-dark mb-2">
-                  <i class="fa fa-exclamation-circle me-2 text-danger"></i><span id="delayReasonLabel">Reason for Delays</span> <span id="delayReasonRequired" class="text-danger" style="display:none;">*</span><small class="fw-normal text-muted" id="delayReasonOptionalText"> (optional)</small>
+                  <i class="fa fa-exclamation-circle me-2 text-warning"></i>Reason for Extended Duration <small class="fw-normal text-muted">(optional)</small>
                 </label>
 
-                <!-- Category Dropdown -->
-                <div class="mb-2">
-                  <label class="form-label text-muted small">Category</label>
-                  <select id="delayReasonCategory" name="delay_reason_category" class="form-select">
-                    <option value="">-- Select Category --</option>
-                    <option value="parts" selected>Parts-Related Delays</option>
-                    <option value="technical">Technical / Diagnostic Issues</option>
-                    <option value="workload">High Workload / Operational Capacity</option>
-                    <option value="customer">Customer-Related Causes</option>
-                    <option value="administrative">Administrative / System Issues</option>
-                    <option value="quality">Quality-Control & Testing Delays</option>
-                    <option value="external">External / Environmental Factors</option>
-                  </select>
-                  <input type="hidden" name="delay_reason_text" id="delayReasonTextHidden" value="">
-                </div>
-
-                <!-- Specific Reason Dropdown -->
-                <div class="mb-2">
-                  <label class="form-label text-muted small">Specific Reason <span id="reasonRequiredBadge" class="badge bg-danger ms-2" style="display:none;">Required</span></label>
-                  <select id="delayReasonDropdown" name="delay_reason" class="form-select">
-                    <option value="">-- Select Specific Reason --</option>
-                    {% if delay_reasons_by_category and delay_reasons_by_category.parts %}
-                      {% for reason in delay_reasons_by_category.parts %}
-                        <option value="{{ reason.id }}">{{ reason.reason_text }}</option>
-                      {% endfor %}
-                    {% else %}
-                      <option value="1">Spare parts out of stock</option>
-                      <option value="2">Incorrect part delivered or mismatch with vehicle model</option>
-                      <option value="3">Delayed parts shipment from supplier</option>
-                      <option value="4">Need for special-order parts (rare or imported)</option>
-                    {% endif %}
-                  </select>
-                  <div id="selectedReasonDisplay" class="alert alert-info mt-2" style="display:none;">
-                    <i class="fa fa-check-circle me-2"></i>
-                    <strong>Selected:</strong> <span id="selectedReasonText"></span>
-                  </div>
-                </div>
-
-                <!-- Custom Comments -->
+                <!-- Free-Form Text Input for Delay Reason -->
                 <div class="mb-3">
-                  <label class="form-label text-muted small">Additional Comments (optional)</label>
-                  <textarea id="delayReasonComments" name="delay_reason_comments" class="form-control form-control-sm" rows="2" placeholder="Add any additional details about the delay..."></textarea>
+                  <textarea id="delayReasonInput" name="delay_reason_text" class="form-control" rows="3" placeholder="If the order took longer than estimated, provide the reason here (e.g., additional repairs discovered, technical issues, parts shortage, etc.)..."></textarea>
                 </div>
-
-                <!-- Save Delay Reason Feedback -->
-                <div id="delayReasonSaveMessage" class="alert alert-info" style="display: none; margin-top: 1rem;">
-                  <i class="fa fa-check-circle me-2"></i>
-                  <span id="delayReasonSaveText">Delay reason saved successfully</span>
-                </div>
-
-                <!-- Save Delay Reason Button -->
-                <div class="d-flex gap-2 mt-3">
-                  <button type="button" id="saveDelayReasonBtn" class="btn btn-sm btn-primary">
-                    <i class="fa fa-save me-1"></i>Save Delay Reason
-                  </button>
-                  <button type="button" id="saveDelayReasonLoadingBtn" class="btn btn-sm btn-primary" style="display: none;" disabled>
-                    <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                    Saving...
-                  </button>
-                </div>
-
-                <small class="text-muted d-block mt-2">
-                  <i class="fa fa-info-circle me-1"></i><span id="delayReasonHelpText">Select the reason if order exceeded 9 working hours.</span>
-                </small>
               </div>
             </div>
           </div>
@@ -1555,27 +1497,15 @@
 
   // Attach handlers to buttons inside signature modal
   const exceeds9HoursCheck = {{ exceeds_9_hours|lower }};
-  const delayReasonDropdownRef = document.getElementById('delayReasonDropdown');
 
   function handleFooterButtonClick(e) {
     e.preventDefault();
 
-    // Re-initialize delay reason fields before validation
-    if (typeof initializeDelayReasonFields === 'function') {
-      initializeDelayReasonFields();
-    }
-
-    // Check if delay reason is required and validate
-    const delayReasonDropdownRef = document.getElementById('delayReasonDropdown');
-    if (exceeds9HoursCheck && delayReasonDropdownRef) {
-      const selectedReason = delayReasonDropdownRef.value;
-      if (!selectedReason) {
-        // Switch to details tab to show the delay reason field
-        const detailsTab = document.getElementById('detailsTab');
-        if (detailsTab) detailsTab.click();
-        alert('Order has exceeded 9 working hours. Please select a delay reason before completing.');
-        return false;
-      }
+    // Check if user provided a delay reason when order exceeded 9 hours and show alert
+    const delayReasonInput = document.getElementById('delayReasonInput');
+    if (exceeds9HoursCheck && delayReasonInput && delayReasonInput.value.trim()) {
+      // Show confirmation alert that order exceeded 9 hours and reason was provided
+      showDelayExceededAlert();
     }
 
     ensureAndSubmit();
@@ -1584,7 +1514,51 @@
   if (footerBtn) footerBtn.addEventListener('click', handleFooterButtonClick);
   if (signAndCompleteBtn) signAndCompleteBtn.addEventListener('click', handleFooterButtonClick);
 
-  if (overrunModal && document.getElementById('completeOverrunSave')){
+  // Show alert when order exceeds 9 hours and user provided a reason
+  function showDelayExceededAlert() {
+    const delayReasonInput = document.getElementById('delayReasonInput');
+    const providedReason = delayReasonInput ? delayReasonInput.value.trim() : '';
+
+    if (providedReason) {
+      // Create and show a red alert modal
+      const alertHtml = `
+        <div class="modal fade" id="delayExceededAlertModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+          <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-danger border-3 shadow-lg">
+              <div class="modal-header bg-danger text-white border-0">
+                <h5 class="modal-title fw-bold">
+                  <i class="fa fa-exclamation-circle me-2"></i>Order Exceeded 9 Hours
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+              </div>
+              <div class="modal-body p-4">
+                <div class="alert alert-danger border-0 bg-danger bg-opacity-10 mb-3">
+                  <i class="fa fa-clock me-2 text-danger"></i>
+                  <strong>This order took longer than the estimated duration (exceeds 9 hours).</strong>
+                </div>
+                <div class="mb-3">
+                  <label class="form-label fw-semibold text-dark">Reported Reason:</label>
+                  <div class="p-3 bg-light border rounded-2" style="border-color: #dee2e6;">
+                    <p class="mb-0 text-dark">${providedReason}</p>
+                  </div>
+                </div>
+              </div>
+              <div class="modal-footer bg-light border-top">
+                <button type="button" class="btn btn-danger fw-bold" data-bs-dismiss="modal">
+                  <i class="fa fa-check me-1"></i>Acknowledged
+                </button>
+              </div>\n            </div>\n          </div>\n        </div>\n      `;
+
+      // Remove any existing alert modal
+      const existingModal = document.getElementById('delayExceededAlertModal');
+      if (existingModal) existingModal.remove();
+
+      // Add the new modal to the page
+      document.body.insertAdjacentHTML('beforeend', alertHtml);
+
+      // Show the modal
+      const delayAlertModal = new bootstrap.Modal(document.getElementById('delayExceededAlertModal'));
+      delayAlertModal.show();\n    }\n  }\n\n  if (overrunModal && document.getElementById('completeOverrunSave')){
     document.getElementById('completeOverrunSave').addEventListener('click', function(){
       const v = (overrunTextarea.value||'').trim();
       overrunError.style.display = 'none';
@@ -1610,335 +1584,20 @@
 })();
 </script>
 
-<!-- Delay Reason Dropdown Handler -->
+<!-- Free-Form Delay Reason Handler -->
 <script>
 (function(){
   const exceeds9Hours = {{ exceeds_9_hours|lower }};
-
-  // Build delay reasons from Django context with fallback
-  const delayReasonsByCategoryJson = {};
-  try {
-    {% for category, reasons in delay_reasons_by_category.items %}
-      delayReasonsByCategoryJson['{{ category }}'] = [
-        {% for reason in reasons %}
-          { id: {{ reason.id }}, reason_text: '{{ reason.reason_text|escapejs }}' },
-        {% endfor %}
-      ];
-    {% endfor %}
-  } catch(e) {
-    console.warn('Failed to load delay reasons:', e);
-  }
-
-  // Fallback delay reasons if database is not initialized
-  if (Object.keys(delayReasonsByCategoryJson).length === 0) {
-    delayReasonsByCategoryJson['parts'] = [
-      { id: 1, reason_text: 'Spare parts out of stock' },
-      { id: 2, reason_text: 'Incorrect part delivered or mismatch with vehicle model' },
-      { id: 3, reason_text: 'Delayed parts shipment from supplier' },
-      { id: 4, reason_text: 'Need for special-order parts (rare or imported)' },
-    ];
-    delayReasonsByCategoryJson['technical'] = [
-      { id: 5, reason_text: 'Unexpected faults discovered during routine service' },
-      { id: 6, reason_text: 'Complex diagnostics needed (electrical issues, sensor faults, ECU problems)' },
-      { id: 7, reason_text: 'Need for specialist technician to inspect certain problems' },
-      { id: 8, reason_text: 'Software updates or reprogramming taking longer' },
-    ];
-    delayReasonsByCategoryJson['workload'] = [
-      { id: 9, reason_text: 'High number of vehicles in queue' },
-      { id: 10, reason_text: 'Insufficient technicians available (leave, training, or peak hours)' },
-      { id: 11, reason_text: 'Workshop overload due to special promotions or seasonal rush' },
-      { id: 12, reason_text: 'Equipment or service bay not available' },
-    ];
-    delayReasonsByCategoryJson['customer'] = [
-      { id: 13, reason_text: 'Customer delayed approval for additional repairs or parts' },
-      { id: 14, reason_text: 'Inaccurate information provided about the issue' },
-      { id: 15, reason_text: 'Late vehicle drop-off vs. scheduled time' },
-    ];
-    delayReasonsByCategoryJson['administrative'] = [
-      { id: 16, reason_text: 'POS system or billing delays' },
-      { id: 17, reason_text: 'Job order not updated correctly' },
-      { id: 18, reason_text: 'Miscommunication between front desk and workshop' },
-      { id: 19, reason_text: 'Warranty validation delays' },
-    ];
-    delayReasonsByCategoryJson['quality'] = [
-      { id: 20, reason_text: 'Extended road testing required' },
-      { id: 21, reason_text: 'Rechecking after repair for safety or accuracy' },
-      { id: 22, reason_text: 'Final inspection backlog' },
-    ];
-    delayReasonsByCategoryJson['external'] = [
-      { id: 23, reason_text: 'Power outage' },
-      { id: 24, reason_text: 'Bad weather affecting testing (e.g., rain for brake tests)' },
-      { id: 25, reason_text: 'Transport limitations (for outsourced tasks like painting)' },
-    ];
-  }
-
-  // Initialize delay reason elements (may not be immediately available, so we get references when needed)
-  function getDelayReasonElements() {
-    return {
-      category: document.getElementById('delayReasonCategory'),
-      dropdown: document.getElementById('delayReasonDropdown'),
-      section: document.getElementById('delayReasonSection'),
-      label: document.getElementById('delayReasonLabel'),
-      required: document.getElementById('delayReasonRequired'),
-      optional: document.getElementById('delayReasonOptionalText'),
-      helpText: document.getElementById('delayReasonHelpText'),
-      comments: document.getElementById('delayReasonComments'),
-      selectedDisplay: document.getElementById('selectedReasonDisplay'),
-      selectedText: document.getElementById('selectedReasonText')
-    };
-  }
-
   const completeForm = document.getElementById('completeForm');
-  const footerSignAndComplete = document.getElementById('footerSignAndComplete');
 
-  // Initialize visibility and requirement
-  function updateDelayReasonUI() {
-    const els = getDelayReasonElements();
-    if (exceeds9Hours && els.section) {
-      if (els.required) els.required.style.display = 'inline';
-      if (els.optional) els.optional.style.display = 'none';
-      if (els.section) els.section.classList.add('border', 'border-danger', 'bg-danger', 'bg-opacity-10', 'p-3', 'rounded');
-      if (els.helpText) els.helpText.textContent = 'This order exceeded 9 working hours. You must select a delay reason.';
-    }
-  }
-
-  // Populate specific reasons based on category
-  function populateReasons(category) {
-    const els = getDelayReasonElements();
-    if (!els.dropdown) return;
-    els.dropdown.innerHTML = '<option value="">-- Select Specific Reason --</option>';
-    if (category && delayReasonsByCategoryJson[category]) {
-      delayReasonsByCategoryJson[category].forEach(function(reason) {
-        const option = document.createElement('option');
-        option.value = reason.id;
-        option.textContent = reason.reason_text;
-        els.dropdown.appendChild(option);
-      });
-    }
-  }
-
-  // Event listeners
-  function attachDelayReasonEventListeners() {
-    const els = getDelayReasonElements();
-    if (els.category && !els.category.dataset.listenerAttached) {
-      els.category.addEventListener('change', function() {
-        populateReasons(this.value);
-        // Clear the dropdown selection when category changes
-        const dropdownEl = document.getElementById('delayReasonDropdown');
-        if (dropdownEl) dropdownEl.value = '';
-      });
-      els.category.dataset.listenerAttached = 'true';
-    }
-  }
-
-  // Validate delay reason on form submission
-  if (completeForm && exceeds9Hours) {
-    completeForm.addEventListener('submit', function(e) {
-      const els = getDelayReasonElements();
-      const selectedReason = els.dropdown ? els.dropdown.value : '';
-      if (!selectedReason) {
-        e.preventDefault();
-        e.stopPropagation();
-        alert('Order has exceeded 9 working hours. Please select a delay reason before completing.');
-        // Switch to details tab to show the delay reason field
-        const detailsTab = document.getElementById('detailsTab');
-        if (detailsTab) detailsTab.click();
-        return false;
-      }
-    }, true); // Use capture phase to ensure this runs before form submission
-  }
-
-  // Initialize UI on page load
-  updateDelayReasonUI();
-
-  // Initialize Specific Reason dropdown on load
-  function initializeDelayReasonFields() {
-    const els = getDelayReasonElements();
-    if (!els.category) return;
-
-    attachDelayReasonEventListeners();
-
-    // If no category selected, pick the first non-empty option
-    if (!els.category.value) {
-      const firstCategoryOption = els.category.querySelector('option[value]:not([value=""])');
-      if (firstCategoryOption) {
-        els.category.value = firstCategoryOption.value;
-      }
-    }
-    if (els.category.value) {
-      populateReasons(els.category.value);
-      // Auto-select first specific reason if none selected
-      if (els.dropdown && (!els.dropdown.value || els.dropdown.value === '') && els.dropdown.options.length > 1) {
-        els.dropdown.selectedIndex = 1;
-      }
-    }
-
-    // Sync hidden text field and display selected reason
-    if (els.dropdown && els.dropdown.selectedIndex > 0) {
-      const hidden = document.getElementById('delayReasonTextHidden');
-      const txt = els.dropdown.options[els.dropdown.selectedIndex].text;
-      if (hidden) hidden.value = txt;
-
-      // Show selected reason display
-      if (els.dropdown.value && txt && els.selectedDisplay) {
-        if (els.selectedText) els.selectedText.textContent = txt;
-        els.selectedDisplay.style.display = 'block';
-      }
-    }
-  }
-
-  initializeDelayReasonFields();
-
-  // Absolute fallback: derive first available category from the data map
-  function ensureDelayReasonPopulated() {
-    const els = getDelayReasonElements();
-    if (els.dropdown && els.dropdown.options.length <= 1) {
-      try {
-        const categories = Object.keys(delayReasonsByCategoryJson || {});
-        if (categories.length > 0) {
-          const firstCat = categories[0];
-          if (els.category && !els.category.value) {
-            els.category.value = firstCat;
-          }
-          populateReasons(firstCat);
-          if (els.dropdown.options.length > 1) {
-            els.dropdown.selectedIndex = 1;
-          }
-        }
-      } catch (e) {
-        console.warn('Fallback population failed:', e);
-      }
-    }
-  }
-
-  ensureDelayReasonPopulated();
-
-  // Ensure delay reason text is synced on form submission for server fallback
+  // Ensure delay reason text is synced on form submission
   if (completeForm) {
     completeForm.addEventListener('submit', function() {
-      // Persist the selected reason's text for server fallback
-      const els = getDelayReasonElements();
-      if (els.dropdown) {
-        const reasonText = els.dropdown && els.dropdown.options && els.dropdown.selectedIndex > 0 ? els.dropdown.options[els.dropdown.selectedIndex].text : '';
-        const hiddenText = document.getElementById('delayReasonTextHidden');
-        if (hiddenText) hiddenText.value = reasonText;
-      }
-    });
-  }
-
-  // Keep hidden text in sync when user changes selection and show selected reason
-  function attachDelayReasonDropdownListener() {
-    const els = getDelayReasonElements();
-    if (els.dropdown && !els.dropdown.dataset.changeListenerAttached) {
-      els.dropdown.addEventListener('change', function(){
-        const hidden = document.getElementById('delayReasonTextHidden');
-        const sel = els.dropdown;
-        const txt = sel && sel.options && sel.selectedIndex > 0 ? sel.options[sel.selectedIndex].text : '';
-        if (hidden) hidden.value = txt;
-
-        // Show/hide selected reason display
-        if (sel.value && txt && els.selectedDisplay) {
-          if (els.selectedText) els.selectedText.textContent = txt;
-          els.selectedDisplay.style.display = 'block';
-        }
-      } else {
-        if (els.selectedDisplay) els.selectedDisplay.style.display = 'none';
-      }
-      });
-      els.dropdown.dataset.changeListenerAttached = 'true';
-    }
-  }
-
-  // Attach the dropdown change listener
-  attachDelayReasonDropdownListener();
-
-  // Show required badge when exceeds 9 hours
-  if (exceeds9Hours) {
-    const requiredBadge = document.getElementById('reasonRequiredBadge');
-    if (requiredBadge) requiredBadge.style.display = 'inline-block';
-  }
-
-  // Handle Save Delay Reason button click
-  const saveDelayReasonBtn = document.getElementById('saveDelayReasonBtn');
-  const saveDelayReasonLoadingBtn = document.getElementById('saveDelayReasonLoadingBtn');
-  const delayReasonSaveMessage = document.getElementById('delayReasonSaveMessage');
-  const delayReasonSaveText = document.getElementById('delayReasonSaveText');
-
-  if (saveDelayReasonBtn) {
-    saveDelayReasonBtn.addEventListener('click', async function(e) {
-      e.preventDefault();
-
-      const els = getDelayReasonElements();
-      const delayReasonId = els.dropdown ? els.dropdown.value : '';
-      const delayReasonCategory = els.category ? els.category.value : '';
-      const delayReasonText = els.dropdown && els.dropdown.selectedIndex > 0 ? els.dropdown.options[els.dropdown.selectedIndex].text : '';
-      const delayReasonComments = els.comments ? els.comments.value : '';
-
-      // Validate that a reason is selected
-      if (!delayReasonId) {
-        alert('Please select a delay reason before saving.');
-        return;
-      }
-
-      // Show loading state
-      saveDelayReasonBtn.style.display = 'none';
-      saveDelayReasonLoadingBtn.style.display = 'inline-block';
-      delayReasonSaveMessage.style.display = 'none';
-
-      try {
-        const formData = new FormData();
-        formData.append('delay_reason_id', delayReasonId);
-        formData.append('delay_reason_category', delayReasonCategory);
-        formData.append('delay_reason_text', delayReasonText);
-        formData.append('delay_reason_comments', delayReasonComments);
-
-        const response = await fetch('{% url "tracker:api_save_delay_reason" pk=order.id %}', {
-          method: 'POST',
-          body: formData,
-          headers: {
-            'X-CSRFToken': getCSRFToken() || document.querySelector('[name="csrfmiddlewaretoken"]')?.value || '',
-            'X-Requested-With': 'XMLHttpRequest'
-          }
-        });
-
-        const data = await response.json();
-
-        if (data.success) {
-          // Show success message
-          delayReasonSaveText.textContent = data.message || 'Delay reason saved successfully!';
-          delayReasonSaveMessage.className = 'alert alert-success';
-          delayReasonSaveMessage.innerHTML = '<i class="fa fa-check-circle me-2"></i>' + (data.message || 'Delay reason saved successfully!');
-          delayReasonSaveMessage.style.display = 'block';
-
-          // Reset button state after 2 seconds
-          setTimeout(() => {
-            saveDelayReasonBtn.style.display = 'inline-block';
-            saveDelayReasonLoadingBtn.style.display = 'none';
-          }, 2000);
-
-          // Auto-hide success message after 5 seconds
-          setTimeout(() => {
-            delayReasonSaveMessage.style.display = 'none';
-          }, 5000);
-        } else {
-          // Show error message
-          delayReasonSaveMessage.className = 'alert alert-danger';
-          delayReasonSaveMessage.innerHTML = '<i class="fa fa-exclamation-circle me-2"></i>' + (data.message || 'Failed to save delay reason.');
-          delayReasonSaveMessage.style.display = 'block';
-
-          // Reset button state
-          saveDelayReasonBtn.style.display = 'inline-block';
-          saveDelayReasonLoadingBtn.style.display = 'none';
-        }
-      } catch (error) {
-        console.error('Error saving delay reason:', error);
-        delayReasonSaveMessage.className = 'alert alert-danger';
-        delayReasonSaveMessage.innerHTML = '<i class="fa fa-exclamation-circle me-2"></i>Error: ' + error.message;
-        delayReasonSaveMessage.style.display = 'block';
-
-        // Reset button state
-        saveDelayReasonBtn.style.display = 'inline-block';
-        saveDelayReasonLoadingBtn.style.display = 'none';
+      // Sync the free-form delay reason text field
+      const delayReasonInput = document.getElementById('delayReasonInput');
+      const hiddenText = document.getElementById('delayReasonTextHidden');
+      if (delayReasonInput && hiddenText) {
+        hiddenText.value = delayReasonInput.value.trim();
       }
     });
   }
