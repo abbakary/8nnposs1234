@@ -114,6 +114,28 @@ def api_vehicle_tracking_data(request):
 
         invoices = [inv for inv in invoices_qs if _inv_in_range(inv)]
 
+        # Also fetch invoices linked via OrderInvoiceLink (from order detail page additions)
+        try:
+            from tracker.models import OrderInvoiceLink
+            order_invoice_links = OrderInvoiceLink.objects.select_related('invoice', 'order').select_related('invoice__customer', 'invoice__vehicle')
+            if user_branch:
+                order_invoice_links = order_invoice_links.filter(invoice__branch=user_branch)
+
+            # Collect linked invoices that are in the date range
+            linked_invoices = []
+            for link in order_invoice_links:
+                inv = link.invoice
+                if inv and _inv_in_range(inv):
+                    # Avoid duplicates - only add if not already in invoices list
+                    if not any(existing_inv.id == inv.id for existing_inv in invoices):
+                        linked_invoices.append(inv)
+
+            # Merge linked invoices into main list
+            invoices.extend(linked_invoices)
+            logger.info(f"Added {len(linked_invoices)} invoices from OrderInvoiceLink to tracking data")
+        except Exception as e:
+            logger.warning(f"Failed to fetch OrderInvoiceLink invoices: {e}")
+
         def _plate_from_reference(ref: str):
             if not ref:
                 return None
