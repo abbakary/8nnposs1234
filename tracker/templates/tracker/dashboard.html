@@ -966,6 +966,36 @@
 <script>
 (function(){
   document.addEventListener('DOMContentLoaded', function(){
+    // Revenue View Toggle Functionality
+    var toggleButtons = document.querySelectorAll('.toggle-btn');
+    var allTimeView = document.getElementById('all-time-view');
+    var dailyView = document.getElementById('daily-view');
+
+    toggleButtons.forEach(function(button){
+      button.addEventListener('click', function(){
+        var view = this.getAttribute('data-view');
+
+        // Remove active class from all buttons
+        toggleButtons.forEach(function(btn){
+          btn.classList.remove('active');
+        });
+
+        // Add active class to clicked button
+        this.classList.add('active');
+
+        // Hide all views
+        allTimeView.classList.remove('active');
+        dailyView.classList.remove('active');
+
+        // Show selected view
+        if(view === 'all-time'){
+          allTimeView.classList.add('active');
+        } else if(view === 'daily'){
+          dailyView.classList.add('active');
+        }
+      });
+    });
+
     // Progress bars init (existing)
     document.querySelectorAll('.progress-bar[data-width]').forEach(function(bar){
       var width = bar.dataset.width;
