@@ -901,6 +901,49 @@ def api_create_invoice_from_upload(request):
 
             inv.save(update_fields=['subtotal', 'tax_amount', 'total_amount'])
 
+            # Create OrderInvoiceLink to link invoice to order
+            # This is critical for displaying invoices in order_detail page
+            if order and inv:
+                try:
+                    from tracker.models import OrderInvoiceLink
+
+                    # Check if this is the first invoice for the order
+                    existing_links_count = order.invoice_links.count()
+                    is_primary = existing_links_count == 0  # First invoice is primary
+
+                    # Get the reason for adding this invoice (if it's an additional invoice)
+                    link_reason = request.POST.get('invoice_reason', '').strip()
+                    if not link_reason:
+                        link_reason = request.POST.get('reason', '').strip()
+
+                    # Create or update the link
+                    link, created = OrderInvoiceLink.objects.get_or_create(
+                        order=order,
+                        invoice=inv,
+                        defaults={
+                            'reason': link_reason,
+                            'is_primary': is_primary,
+                            'linked_by': request.user
+                        }
+                    )
+
+                    if created:
+                        logger.info(f"Created OrderInvoiceLink for order {order.id}, invoice {inv.id} (primary={is_primary})")
+                    else:
+                        # Update existing link in case primary status or reason needs updating
+                        if is_primary and not link.is_primary:
+                            link.is_primary = is_primary
+                            link.save(update_fields=['is_primary'])
+                            logger.info(f"Updated OrderInvoiceLink {link.id} to set is_primary=True")
+                        if link_reason and not link.reason:
+                            link.reason = link_reason
+                            link.save(update_fields=['reason'])
+                            logger.info(f"Updated OrderInvoiceLink {link.id} with reason: {link_reason}")
+
+                except Exception as e:
+                    logger.error(f"Failed to create OrderInvoiceLink for invoice {inv.id} and order {order.id}: {e}")
+                    # Don't fail the entire operation if linking fails
+
             # Update order type aggregating categories from ALL linked invoices (primary + additional)
             if order:
                 try:
