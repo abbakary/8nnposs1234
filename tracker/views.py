@@ -6107,6 +6107,114 @@ def api_inquiry_bulk_action(request: HttpRequest):
 
 
 @login_required
+@require_http_methods(["POST"])
+def api_save_delay_reason(request: HttpRequest, pk: int):
+    """API endpoint to save delay reason without completing the order"""
+    orders_qs = scope_queryset(Order.objects.all(), request.user, request)
+    order = get_object_or_404(orders_qs, pk=pk)
+
+    try:
+        # Get delay reason ID and category from request
+        delay_reason_id = request.POST.get('delay_reason_id') or request.POST.get('delay_reason')
+        delay_reason_category = request.POST.get('delay_reason_category')
+        delay_reason_text = request.POST.get('delay_reason_text')
+        delay_reason_comments = request.POST.get('delay_reason_comments', '').strip()
+
+        delay_reason_saved = False
+
+        # Try to save using the selected ID (primary path)
+        if delay_reason_id:
+            try:
+                from tracker.models import DelayReason
+                delay_reason = DelayReason.objects.get(id=delay_reason_id)
+                order.delay_reason = delay_reason
+                order.delay_reason_reported_at = timezone.now()
+                order.delay_reason_reported_by = request.user
+                order.exceeded_9_hours = True
+
+                # Save comments if provided
+                if delay_reason_comments:
+                    order.overrun_reason = delay_reason_comments
+                    order.save(update_fields=['delay_reason', 'delay_reason_reported_at', 'delay_reason_reported_by', 'exceeded_9_hours', 'overrun_reason', 'overrun_reported_at'])
+                    order.overrun_reported_at = timezone.now()
+                else:
+                    order.save(update_fields=['delay_reason', 'delay_reason_reported_at', 'delay_reason_reported_by', 'exceeded_9_hours'])
+
+                delay_reason_saved = True
+                add_audit_log(request.user, 'order_delay_reason_saved', f"Delay reason '{delay_reason.reason_text}' saved for order {order.order_number}")
+
+                return JsonResponse({
+                    'success': True,
+                    'message': f'Delay reason saved: {delay_reason.reason_text}',
+                    'delay_reason': {
+                        'id': delay_reason.id,
+                        'text': delay_reason.reason_text,
+                        'category': delay_reason.category.category if delay_reason.category else 'unknown'
+                    }
+                })
+            except Exception as e:
+                logger.warning(f"Error saving delay reason by ID for order {order.id}: {str(e)}")
+
+        # Fallback: try text + category if ID didn't work
+        if not delay_reason_saved and delay_reason_text and delay_reason_category:
+            try:
+                from tracker.models import DelayReason, DelayReasonCategory
+                cat_obj = DelayReasonCategory.objects.filter(category=delay_reason_category, is_active=True).first()
+                if cat_obj:
+                    dr = DelayReason.objects.filter(category=cat_obj, reason_text__iexact=delay_reason_text).first()
+                    if not dr:
+                        dr = DelayReason.objects.create(category=cat_obj, reason_text=delay_reason_text, is_active=True)
+
+                    order.delay_reason = dr
+                    order.delay_reason_reported_at = timezone.now()
+                    order.delay_reason_reported_by = request.user
+                    order.exceeded_9_hours = True
+
+                    # Save comments if provided
+                    if delay_reason_comments:
+                        order.overrun_reason = delay_reason_comments
+                        order.overrun_reported_at = timezone.now()
+                        order.save(update_fields=['delay_reason', 'delay_reason_reported_at', 'delay_reason_reported_by', 'exceeded_9_hours', 'overrun_reason', 'overrun_reported_at'])
+                    else:
+                        order.save(update_fields=['delay_reason', 'delay_reason_reported_at', 'delay_reason_reported_by', 'exceeded_9_hours'])
+
+                    add_audit_log(request.user, 'order_delay_reason_saved', f"Delay reason '{dr.reason_text}' saved for order {order.order_number}")
+
+                    return JsonResponse({
+                        'success': True,
+                        'message': f'Delay reason saved: {dr.reason_text}',
+                        'delay_reason': {
+                            'id': dr.id,
+                            'text': dr.reason_text,
+                            'category': cat_obj.category if cat_obj else 'unknown'
+                        }
+                    })
+                else:
+                    return JsonResponse({
+                        'success': False,
+                        'message': 'Selected delay reason category not found.'
+                    }, status=400)
+            except Exception as e:
+                logger.error(f"Error saving delay reason via text+category for order {order.id}: {str(e)}")
+                return JsonResponse({
+                    'success': False,
+                    'message': f'Error saving delay reason: {str(e)}'
+                }, status=400)
+
+        return JsonResponse({
+            'success': False,
+            'message': 'No delay reason provided. Please select a reason.'
+        }, status=400)
+
+    except Exception as e:
+        logger.error(f"Error in api_save_delay_reason: {str(e)}")
+        return JsonResponse({
+            'success': False,
+            'message': f'Error: {str(e)}'
+        }, status=500)
+
+
+@login_required
 def system_settings(request: HttpRequest):
     def defaults():
         return {
