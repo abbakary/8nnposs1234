@@ -1538,7 +1538,22 @@
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
               </div>
               <div class="modal-body p-4">
-                <div class="alert alert-danger border-0 bg-danger bg-opacity-10 mb-3">\n                  <i class="fa fa-clock me-2 text-danger"></i>\n                  <strong>This order took longer than the estimated duration (exceeds 9 hours).</strong>\n                </div>\n                <div class="mb-3">\n                  <label class="form-label fw-semibold text-dark">Reported Reason:</label>\n                  <div class="p-3 bg-light border rounded-2" style="border-color: #dee2e6;\">\n                    <p class="mb-0 text-dark">${providedReason}</p>\n                  </div>\n                </div>\n              </div>\n              <div class="modal-footer bg-light border-top">\n                <button type="button" class="btn btn-danger fw-bold" data-bs-dismiss="modal">\n                  <i class="fa fa-check me-1"></i>Acknowledged\n                </button>\n              </div>\n            </div>\n          </div>\n        </div>\n      `;
+                <div class="alert alert-danger border-0 bg-danger bg-opacity-10 mb-3">
+                  <i class="fa fa-clock me-2 text-danger"></i>
+                  <strong>This order took longer than the estimated duration (exceeds 9 hours).</strong>
+                </div>
+                <div class="mb-3">
+                  <label class="form-label fw-semibold text-dark">Reported Reason:</label>
+                  <div class="p-3 bg-light border rounded-2" style="border-color: #dee2e6;">
+                    <p class="mb-0 text-dark">${providedReason}</p>
+                  </div>
+                </div>
+              </div>
+              <div class="modal-footer bg-light border-top">
+                <button type="button" class="btn btn-danger fw-bold" data-bs-dismiss="modal">
+                  <i class="fa fa-check me-1"></i>Acknowledged
+                </button>
+              </div>\n            </div>\n          </div>\n        </div>\n      `;
 
       // Remove any existing alert modal\n      const existingModal = document.getElementById('delayExceededAlertModal');\n      if (existingModal) existingModal.remove();\n      \n      // Add the new modal to the page\n      document.body.insertAdjacentHTML('beforeend', alertHtml);\n      \n      // Show the modal\n      const delayAlertModal = new bootstrap.Modal(document.getElementById('delayExceededAlertModal'));\n      delayAlertModal.show();\n    }\n  }\n\n  if (overrunModal && document.getElementById('completeOverrunSave')){
     document.getElementById('completeOverrunSave').addEventListener('click', function(){
